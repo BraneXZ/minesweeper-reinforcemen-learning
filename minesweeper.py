@@ -11,16 +11,15 @@ class MineSweeper:
         self.col = col
         self.mine = mine
         self.first_move = True
-        self._make_boards()
+        self._make_board()
         self.unknown_fields = row * col - mine
         self.win = False
-        
+        self.reward = 1 / (row * col)
+
     # Create minesweeper board
-    # Player board is what the player sees
-    # Hidden board contains all field values after first move
     # -1 - Unknown field
     # 0-8 - Number of mines surrounding that field
-    def _make_boards(self):
+    def _make_board(self):
         self.board = []
         
         for r in range(self.row):
@@ -31,6 +30,7 @@ class MineSweeper:
             self.board.append(row)
     
     # Take action
+    # Return reward 1/(row*col) if cell is not a mine, -1 otherwise
     def action(self, row=-1, col=-1, val=-1):
         if val != -1:
             row, col = self._val_to_rc(val)
@@ -47,8 +47,7 @@ class MineSweeper:
             val = self._rc_to_val(row, col)
             # Check if it's mine first
             if val in self.mine_location:
-                print("You lose")
-                return
+                return -1
                 
             neighbors = self._get_neighbors(val)
             mine_count = 0
@@ -88,9 +87,11 @@ class MineSweeper:
                             if neighbor not in visited_neighbors:
                                 visited_neighbors.add(neighbor)
                                 neighbors.add(neighbor)
-        
+
         if self.unknown_fields == 0:
             self.win = True
+
+        return self.reward
 
     def _reveal_loc(self, row, col, mine_count):
         self.board[row][col] = mine_count
@@ -164,3 +165,9 @@ class MineSweeper:
         
         print(border)
         print(f"unknown: {self.unknown_fields}")
+    
+    def reset_board(self):
+        self._make_board()
+        self.first_move = True
+        self.win = False
+        self.unknown_fields = self.row * self.col - self.mine
